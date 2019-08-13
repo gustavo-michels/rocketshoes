@@ -1,101 +1,77 @@
-import React from 'react';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { MdAddShoppingCart } from 'react-icons/md';
+import { formatPrice } from '../../util/format';
+import api from '../../services/api';
+
+import { bindActionCreators } from 'redux';
+import * as CartActions from '../../store/modules/cart/actions';
 
 import { ProductList } from './styles';
 
-export default function Home() {
-  return (
-    <ProductList>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+class Home extends Component {
+  state = {
+    products: [],
+  };
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+  async componentDidMount() {
+    const response = await api.get('products');
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+    const data = response.data.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+    }));
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+    this.setState({ products: data });
+  }
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+  handleAddProduct = id => {
+    const { addToCartRequest } = this.props;
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-olympikus-proof-masculino/88/D22-0359-088/D22-0359-088_zoom1.jpg"
-          alt="Tênis"
-        />
-        <strong>Tênis Olympikus Proof Masculino - Marinho e Royal</strong>
-        <span>R$ 129,90</span>
+    addToCartRequest(id);
+  };
 
-        <button type="button">
-          <div>
-            <MdAddShoppingCart size={16} color="#fff" /> 3
-          </div>
-          <span>ADICIONAR AO CARINHO</span>
-        </button>
-      </li>
-    </ProductList>
-  );
+  render() {
+    const { products } = this.state;
+    const { amount } = this.props;
+
+    return (
+      <ProductList>
+        {products.map(product => (
+          <li key={product.id}>
+            <img src={product.image} alt={product.title} />
+            <strong>{product.title}</strong>
+            <span>{product.priceFormatted}</span>
+
+            <button
+              type="button"
+              onClick={() => this.handleAddProduct(product.id)}
+            >
+              <div>
+                <MdAddShoppingCart size={16} color="#fff" />{' '}
+                {amount[product.id] || 0}
+              </div>
+              <span>ADICIONAR AO CARINHO</span>
+            </button>
+          </li>
+        ))}
+      </ProductList>
+    );
+  }
 }
+
+const mapStateToProps = state => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+
+    return amount;
+  }, {}),
+});
+
+const mapDispatchToProps = dispatch =>
+  bindActionCreators(CartActions, dispatch);
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Home);
